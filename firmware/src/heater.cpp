@@ -6,6 +6,7 @@
 // Heater arrays
 Heater heaters[5];
 bool thermalFault[5] = {false, false, false, false, false};
+bool softwareEnabled[5] = {true, true, true, true, true};
 uint8_t pwmCycle = 0;
 
 const uint8_t heaterPins[5] = {
@@ -163,10 +164,56 @@ void printDetailedStatus() {
     Serial.print(heaters[i].stable ? "YES" : "NO ");
     Serial.print(" | Enabled: ");
     Serial.print(heaters[i].enabled ? "YES" : "NO ");
+    Serial.print(" | SW: ");
+    Serial.print(softwareEnabled[i] ? "ON " : "OFF");
+    Serial.print(" | HW: ");
+    Serial.print(digitalRead(heaterEnableSwitchPins[i]) == LOW ? "ON " : "OFF");
     Serial.print(" | Fault: ");
     Serial.println(thermalFault[i] ? "YES" : "NO");
   }
   Serial.println("===================================\n");
+}
+
+void enableHeater(uint8_t heaterIndex) {
+  if (heaterIndex >= NUMBER_OF_HEATERS) {
+    Serial.println("Invalid heater index. Use 0-4.");
+    return;
+  }
+  softwareEnabled[heaterIndex] = true;
+  Serial.print("Heater ");
+  Serial.print(heaterIndex);
+  Serial.println(" enabled via software.");
+}
+
+void disableHeater(uint8_t heaterIndex) {
+  if (heaterIndex >= NUMBER_OF_HEATERS) {
+    Serial.println("Invalid heater index. Use 0-4.");
+    return;
+  }
+  softwareEnabled[heaterIndex] = false;
+  heaters[heaterIndex].enabled = false;
+  heaters[heaterIndex].stable = false;
+  digitalWrite(heaters[heaterIndex].pin, LOW);
+  Serial.print("Heater ");
+  Serial.print(heaterIndex);
+  Serial.println(" disabled via software.");
+}
+
+void enableAllHeaters() {
+  for (uint8_t i = 0; i < NUMBER_OF_HEATERS; i++) {
+    softwareEnabled[i] = true;
+  }
+  Serial.println("All heaters enabled via software.");
+}
+
+void disableAllHeaters() {
+  for (uint8_t i = 0; i < NUMBER_OF_HEATERS; i++) {
+    softwareEnabled[i] = false;
+    heaters[i].enabled = false;
+    heaters[i].stable = false;
+    digitalWrite(heaters[i].pin, LOW);
+  }
+  Serial.println("All heaters disabled via software.");
 }
 
 void autoTunePID(uint8_t heaterIndex, double tuneSetpoint, int power, int cycles) {

@@ -9,7 +9,8 @@
 
 // Rotary encoder interrupt handlers
 ISR(INT3_vect) {
-  if (!speedAdjustmentEnabled) return;
+  // Encoder CLK interrupt (pin 18)
+  if (!speedAdjustmentEnabled) return; // Disabled during LED blink
   
   uint8_t clkState = digitalRead(ENCODER_CLK);
   uint8_t dtState = digitalRead(ENCODER_DT);
@@ -17,14 +18,16 @@ ISR(INT3_vect) {
   uint32_t currentTime = millis();
   uint32_t timeDiff = currentTime - lastEncoderTime;
   
+  // Determine direction
   if (clkState != dtState) {
+    // Clockwise rotation - increase speed
     int16_t increment;
     if (timeDiff < 50) {
-      increment = 100;
+      increment = 100; // Fast rotation
     } else if (timeDiff < 200) {
-      increment = 25;
+      increment = 25;  // Medium rotation
     } else {
-      increment = 5;
+      increment = 5;   // Slow rotation
     }
     
     steppers[selectedMotorIndex].speed += increment;
@@ -32,13 +35,14 @@ ISR(INT3_vect) {
       steppers[selectedMotorIndex].speed = MAX_SPEED;
     }
   } else {
+    // Counter-clockwise rotation - decrease speed
     uint16_t decrement;
     if (timeDiff < 50) {
-      decrement = 100;
+      decrement = 100; // Fast rotation
     } else if (timeDiff < 200) {
-      decrement = 25;
+      decrement = 25;  // Medium rotation
     } else {
-      decrement = 5;
+      decrement = 5;   // Slow rotation
     }
     
     if (steppers[selectedMotorIndex].speed > decrement) {
@@ -52,25 +56,43 @@ ISR(INT3_vect) {
 }
 
 ISR(INT1_vect) {
+  // Encoder DT interrupt (pin 20) - secondary for better responsiveness
   if (!speedAdjustmentEnabled) return;
 }
 
 // Timer4 ISR - Heater control with software PWM
 ISR(TIMER4_COMPA_vect) {
+  // Increment PWM cycle counter
   pwmCycle++;
   if (pwmCycle >= PWM_PERIOD) {
     pwmCycle = 0;
   }
   
   for (uint8_t i = 0; i < NUMBER_OF_HEATERS; i++) {
+    // Read temperature and update PID
     int adc = analogRead(heaters[i].sensorPin);
     heaters[i].input = getTemperature(adc);
     
-    if (digitalRead(heaterEnableSwitchPins[i]) == LOW) {
+    bool hardwareEnabled = (digitalRead(heaterEnableSwitchPins[i]) == LOW);
+    bool shouldBeEnabled = hardwareEnabled && softwareEnabled[i];
+    
+    // Detect transition from disabled to enabled
+    if (shouldBeEnabled && !heaters[i].enabled) {
+      // Re-enabling heater - reset thermal monitoring state
+      heaters[i].lastTemp = heaters[i].input;
+      heaters[i].lastUpdate = millis();
+      thermalFault[i] = false; // Clear any previous thermal fault
+      heaters[i].stable = false; // Reset stability flag
+    }
+    
+    // Heater is enabled only if BOTH software AND hardware enable it
+    if (shouldBeEnabled) {
       heaters[i].enabled = true;
       if (!thermalFault[i]) {
         heaters[i].pid->Compute();
         
+        // Software PWM implementation
+        // Map PID output (0-200) to PWM cycles (0-10)
         uint8_t scaledOutput = map(heaters[i].output, 0, 200, 0, PWM_PERIOD);
         
         if (pwmCycle < scaledOutput) {
@@ -83,52 +105,16 @@ ISR(TIMER4_COMPA_vect) {
       }
     } else {
       heaters[i].enabled = false;
-      heaters[i].stable = false;
-      digitalWrite(heaters[i].pin, LOW);
+      heaters[i].stable = false;  // Reset stability when disabled
+      digitalWrite(heaters[i].pin, LOW); // Turn off heater if not enabled
     }
   }
 }
 
-void setupTimer4() {
-  TCCR4A = 0;
-  TCCR4B = 0;
-  TCNT4  = 0;
-  TCCR4B |= (1 << WGM42) | (1 << CS42) | (1 << CS40);
-  OCR4A = 15624;
-  TIMSK4 |= (1 << OCIE4A);
-}
-
-void setupTimer1() {
-  TCCR1A = 0;
-  TCCR1B = 0;
-  TCNT1  = 0;
-  TCCR1B |= (1 << WGM12) | (1 << CS11);
-  OCR1A = 999;
-  TIMSK1 |= (1 << OCIE1A);
-}
-
-void setupTimer3() {
-  TCCR3A = 0;
-  TCCR3B = 0;
-  TCNT3  = 0;
-  TCCR3B |= (1 << WGM32) | (1 << CS31);
-  OCR3A = 999;
-  TIMSK3 |= (1 << OCIE3A);
-}
-
-void setupTimer5() {
-  TCCR5A = 0;
-  TCCR5B = 0;
-  TCNT5  = 0;
-  TCCR5B |= (1 << WGM52) | (1 << CS51);
-  OCR5A = 999;
-  TIMSK5 |= (1 << OCIE5A);
-}
-
-// Timer ISRs for stepper control
+// Timer1 ISR - Handles steppers 0 and 1
 ISR(TIMER1_COMPA_vect) {
   static uint16_t counter[2] = {0, 0};
-  const uint16_t BASE_FREQ = 2000;
+  const uint16_t BASE_FREQ = 2000; // 2kHz base frequency
   
   for (uint8_t i = 0; i < 2; i++) {
     if (steppers[i].enabled && steppers[i].speed > 0) {
@@ -137,6 +123,7 @@ ISR(TIMER1_COMPA_vect) {
       
       if (counter[i] >= threshold) {
         counter[i] = 0;
+        // Toggle step pin
         steppers[i].stepState = !steppers[i].stepState;
         digitalWrite(stepperStepPins[i], steppers[i].stepState);
       }
@@ -147,9 +134,10 @@ ISR(TIMER1_COMPA_vect) {
   }
 }
 
+// Timer3 ISR - Handles steppers 2 and 3
 ISR(TIMER3_COMPA_vect) {
   static uint16_t counter[2] = {0, 0};
-  const uint16_t BASE_FREQ = 2000;
+  const uint16_t BASE_FREQ = 2000; // 2kHz base frequency
   
   for (uint8_t i = 0; i < 2; i++) {
     uint8_t stepperIdx = i + 2;
@@ -159,6 +147,7 @@ ISR(TIMER3_COMPA_vect) {
       
       if (counter[i] >= threshold) {
         counter[i] = 0;
+        // Toggle step pin
         steppers[stepperIdx].stepState = !steppers[stepperIdx].stepState;
         digitalWrite(stepperStepPins[stepperIdx], steppers[stepperIdx].stepState);
       }
@@ -169,9 +158,10 @@ ISR(TIMER3_COMPA_vect) {
   }
 }
 
+// Timer5 ISR - Handles stepper 4
 ISR(TIMER5_COMPA_vect) {
   static uint16_t counter = 0;
-  const uint16_t BASE_FREQ = 2000;
+  const uint16_t BASE_FREQ = 2000; // 2kHz base frequency
   const uint8_t stepperIdx = 4;
   
   if (steppers[stepperIdx].enabled && steppers[stepperIdx].speed > 0) {
@@ -180,6 +170,7 @@ ISR(TIMER5_COMPA_vect) {
     
     if (counter >= threshold) {
       counter = 0;
+      // Toggle step pin
       steppers[stepperIdx].stepState = !steppers[stepperIdx].stepState;
       digitalWrite(stepperStepPins[stepperIdx], steppers[stepperIdx].stepState);
     }
@@ -189,22 +180,59 @@ ISR(TIMER5_COMPA_vect) {
   }
 }
 
+// Timer setup functions
+void setupTimer4() {
+  TCCR4A = 0;
+  TCCR4B = 0;
+  TCNT4  = 0;
+  TCCR4B |= (1 << WGM42) | (1 << CS42) | (1 << CS40); // CTC mode, prescaler 1024
+  OCR4A = 15624; // 100 ms at 16 MHz
+  TIMSK4 |= (1 << OCIE4A); // Enable interrupt
+}
+
+void setupTimer1() {
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1  = 0;
+  TCCR1B |= (1 << WGM12) | (1 << CS11); // CTC mode, prescaler 8
+  OCR1A = 999; // ~2kHz at 16MHz (16MHz / 8 / 2000 = 1000)
+  TIMSK1 |= (1 << OCIE1A); // Enable interrupt
+}
+
+void setupTimer3() {
+  TCCR3A = 0;
+  TCCR3B = 0;
+  TCNT3  = 0;
+  TCCR3B |= (1 << WGM32) | (1 << CS31); // CTC mode, prescaler 8
+  OCR3A = 999; // ~2kHz at 16MHz
+  TIMSK3 |= (1 << OCIE3A); // Enable interrupt
+}
+
+void setupTimer5() {
+  TCCR5A = 0;
+  TCCR5B = 0;
+  TCNT5  = 0;
+  TCCR5B |= (1 << WGM52) | (1 << CS51); // CTC mode, prescaler 8
+  OCR5A = 999; // ~2kHz at 16MHz
+  TIMSK5 |= (1 << OCIE5A); // Enable interrupt
+}
+
 void setup() {
   Serial.begin(115200);
   
-  // Initialize modules
+  // Initialize all subsystems
   setupHeaters();
   loadAllPIDFromEEPROM();
   setupSteppers();
   setupEncoder();
   
-  // Setup timers
-  setupTimer1();
-  setupTimer3();
-  setupTimer5();
-  setupTimer4();
+  // Setup all timers
+  setupTimer1();  // Steppers 0-1
+  setupTimer3();  // Steppers 2-3
+  setupTimer5();  // Stepper 4
+  setupTimer4();  // Heater control
   
-  sei();
+  sei(); // Enable interrupts
   
   Serial.println("PET Filament Extruder Controller Initialized");
   Serial.println("Software PWM enabled for all heaters (10Hz)");
@@ -220,11 +248,10 @@ void loop() {
   handleEncoderButton();
   handleLEDBlink();
   
-  // Update stepper and LED states
+  // Update stepper enable states based on heater status
   updateStepperStates();
-  updateHeaterLEDs();
   
-  // Periodic status print
+  // Print periodic status updates
   static unsigned long lastPrint = 0;
   if (!statusUpdatesPaused && millis() - lastPrint > 1000) {
     lastPrint = millis();
@@ -242,7 +269,7 @@ void loop() {
     Serial.println();
   }
   
-  // Resume status updates after timeout
+  // Resume status updates after 15 seconds of no serial input
   if (statusUpdatesPaused && (millis() - lastSerialInput) > STATUS_RESUME_TIMEOUT) {
     statusUpdatesPaused = false;
     Serial.println("[Status updates resumed]\n");

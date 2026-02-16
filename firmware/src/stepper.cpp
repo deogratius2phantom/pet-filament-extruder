@@ -34,7 +34,7 @@ void setupSteppers() {
     pinMode(stepperEnablePins[i], OUTPUT);
     
     digitalWrite(stepperStepPins[i], LOW);
-    digitalWrite(stepperDirPins[i], LOW);
+    digitalWrite(stepperDirPins[i], HIGH); // Default direction
     digitalWrite(stepperEnablePins[i], HIGH);
   }
 }

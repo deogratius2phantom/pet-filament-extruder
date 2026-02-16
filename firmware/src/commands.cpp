@@ -31,6 +31,14 @@ void printMenu() {
   Serial.println("  STATUS");
   Serial.println("    - Show detailed status of all heaters");
   Serial.println();
+  Serial.println("  ENABLE <heater>");
+  Serial.println("    - Enable heater via software (0-4 or ALL)");
+  Serial.println("    - Example: ENABLE 0 or ENABLE ALL");
+  Serial.println();
+  Serial.println("  DISABLE <heater>");
+  Serial.println("    - Disable heater via software (0-4 or ALL)");
+  Serial.println("    - Example: DISABLE 0 or DISABLE ALL");
+  Serial.println();
   Serial.println("MOTOR COMMANDS:");
   Serial.println("  SPEED <motor> <steps/sec>");
   Serial.println("    - Set speed for motor (0-4), range 50-3000");
@@ -142,6 +150,32 @@ void handleSerialCommands() {
       
     } else if (cmd.startsWith("RESET")) {
       resetMotorSpeeds();
+      
+    } else if (cmd.startsWith("ENABLE")) {
+      if (cmd.indexOf("ALL") != -1) {
+        enableAllHeaters();
+      } else {
+        int idx = -1;
+        sscanf(cmd.c_str(), "ENABLE %d", &idx);
+        if (idx >= 0 && idx < NUMBER_OF_HEATERS) {
+          enableHeater(idx);
+        } else {
+          Serial.println("Invalid format. Use: ENABLE <heater> or ENABLE ALL");
+        }
+      }
+      
+    } else if (cmd.startsWith("DISABLE")) {
+      if (cmd.indexOf("ALL") != -1) {
+        disableAllHeaters();
+      } else {
+        int idx = -1;
+        sscanf(cmd.c_str(), "DISABLE %d", &idx);
+        if (idx >= 0 && idx < NUMBER_OF_HEATERS) {
+          disableHeater(idx);
+        } else {
+          Serial.println("Invalid format. Use: DISABLE <heater> or DISABLE ALL");
+        }
+      }
       
     } else {
       Serial.println("Unknown command. Type 'HELP' for available commands.");

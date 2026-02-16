@@ -23,6 +23,7 @@ extern const uint8_t thermistorPins[5];
 extern const uint8_t heaterEnableSwitchPins[5];
 extern const uint8_t heaterStableLEDPins[5];
 extern bool thermalFault[5];
+extern bool softwareEnabled[5];
 extern uint8_t pwmCycle;
 
 // Functions
@@ -37,5 +38,9 @@ void printPIDValues(uint8_t heaterIndex);
 void printAllPIDValues();
 void setPIDValues(uint8_t heaterIndex, double Kp, double Ki, double Kd);
 void printDetailedStatus();
+void enableHeater(uint8_t heaterIndex);
+void disableHeater(uint8_t heaterIndex);
+void enableAllHeaters();
+void disableAllHeaters();
 
 #endif // HEATER_H
