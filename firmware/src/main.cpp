@@ -2,63 +2,9 @@
 #include "config.h"
 #include "heater.h"
 #include "stepper.h"
-#include "encoder.h"
 #include "commands.h"
 #include <pins.h>
 #include <thermistor.h>
-
-// Rotary encoder interrupt handlers
-ISR(INT3_vect) {
-  // Encoder CLK interrupt (pin 18)
-  if (!speedAdjustmentEnabled) return; // Disabled during LED blink
-  
-  uint8_t clkState = digitalRead(ENCODER_CLK);
-  uint8_t dtState = digitalRead(ENCODER_DT);
-  
-  uint32_t currentTime = millis();
-  uint32_t timeDiff = currentTime - lastEncoderTime;
-  
-  // Determine direction
-  if (clkState != dtState) {
-    // Clockwise rotation - increase speed
-    int16_t increment;
-    if (timeDiff < 50) {
-      increment = 100; // Fast rotation
-    } else if (timeDiff < 200) {
-      increment = 25;  // Medium rotation
-    } else {
-      increment = 5;   // Slow rotation
-    }
-    
-    steppers[selectedMotorIndex].speed += increment;
-    if (steppers[selectedMotorIndex].speed > MAX_SPEED) {
-      steppers[selectedMotorIndex].speed = MAX_SPEED;
-    }
-  } else {
-    // Counter-clockwise rotation - decrease speed
-    uint16_t decrement;
-    if (timeDiff < 50) {
-      decrement = 100; // Fast rotation
-    } else if (timeDiff < 200) {
-      decrement = 25;  // Medium rotation
-    } else {
-      decrement = 5;   // Slow rotation
-    }
-    
-    if (steppers[selectedMotorIndex].speed > decrement) {
-      steppers[selectedMotorIndex].speed -= decrement;
-    } else {
-      steppers[selectedMotorIndex].speed = MIN_SPEED;
-    }
-  }
-  
-  lastEncoderTime = currentTime;
-}
-
-ISR(INT1_vect) {
-  // Encoder DT interrupt (pin 20) - secondary for better responsiveness
-  if (!speedAdjustmentEnabled) return;
-}
 
 // Timer4 ISR - Heater control with software PWM
 ISR(TIMER4_COMPA_vect) {
@@ -224,7 +170,6 @@ void setup() {
   setupHeaters();
   loadAllPIDFromEEPROM();
   setupSteppers();
-  setupEncoder();
   
   // Setup all timers
   setupTimer1();  // Steppers 0-1
@@ -236,7 +181,6 @@ void setup() {
   
   Serial.println("PET Filament Extruder Controller Initialized");
   Serial.println("Software PWM enabled for all heaters (10Hz)");
-  Serial.println("Use encoder to adjust speed, press button to select motor");
   Serial.print("Default speed: ");
   Serial.print(DEFAULT_SPEED);
   Serial.println(" steps/sec");
@@ -244,10 +188,7 @@ void setup() {
 }
 
 void loop() {
-  // Handle encoder button and LED blink
-  handleEncoderButton();
-  handleLEDBlink();
-  
+
   // Update stepper enable states based on heater status
   updateStepperStates();
   
@@ -257,7 +198,7 @@ void loop() {
     lastPrint = millis();
     for (int i = 0; i < 5; i++) {
       Serial.print("Heater ");
-      Serial.print(i);
+      Serial.print(i + 1);
       Serial.print(": ");
       Serial.print(heaters[i].input);
       Serial.print("C | Stable: ");

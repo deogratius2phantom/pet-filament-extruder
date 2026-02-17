@@ -53,7 +53,7 @@ void updateStepperStates() {
 
 void setMotorSpeed(uint8_t motorIndex, uint16_t speed) {
   if (motorIndex >= NUMBER_OF_HEATERS) {
-    Serial.println("Invalid motor index. Use 0-4.");
+    Serial.println("Invalid motor index. Use 1-5.");
     return;
   }
   if (speed < MIN_SPEED) speed = MIN_SPEED;
@@ -61,7 +61,7 @@ void setMotorSpeed(uint8_t motorIndex, uint16_t speed) {
   
   steppers[motorIndex].speed = speed;
   Serial.print("Motor ");
-  Serial.print(motorIndex);
+  Serial.print(motorIndex + 1);
   Serial.print(" speed set to ");
   Serial.print(speed);
   Serial.println(" steps/sec");
@@ -78,7 +78,7 @@ void printMotorSpeeds() {
   Serial.println("\nMotor Speeds:");
   for (int i = 0; i < NUMBER_OF_HEATERS; i++) {
     Serial.print("  Motor ");
-    Serial.print(i);
+    Serial.print(i + 1);
     Serial.print(": ");
     Serial.print(steppers[i].speed);
     Serial.println(" steps/sec");
@@ -90,7 +90,7 @@ void printMotorStatus() {
   Serial.println("MOTORS:");
   for (int i = 0; i < NUMBER_OF_HEATERS; i++) {
     Serial.print("  Motor ");
-    Serial.print(i);
+    Serial.print(i + 1);
     Serial.print(": ");
     Serial.print(steppers[i].speed);
     Serial.print(" steps/sec | Running: ");

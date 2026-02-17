@@ -61,7 +61,7 @@ void checkThermalRunaway(uint8_t i) {
     digitalWrite(heaters[i].pin, LOW);
     thermalFault[i] = true;
     Serial.print("Thermal runaway detected on heater ");
-    Serial.println(i);
+    Serial.println(i + 1);
   }
   
   if (abs(currentTemp - heaters[i].setpoint) < 2) {
@@ -101,7 +101,7 @@ void loadAllPIDFromEEPROM() {
 
 void printPIDValues(uint8_t heaterIndex) {
   if (heaterIndex >= NUMBER_OF_HEATERS) {
-    Serial.println("Invalid heater index. Use 0-4.");
+    Serial.println("Invalid heater index. Use 1-5.");
     return;
   }
   double Kp = heaters[heaterIndex].pid->GetKp();
@@ -109,7 +109,7 @@ void printPIDValues(uint8_t heaterIndex) {
   double Kd = heaters[heaterIndex].pid->GetKd();
   
   Serial.print("Heater ");
-  Serial.print(heaterIndex);
+  Serial.print(heaterIndex + 1);
   Serial.println(" PID Values:");
   Serial.print("  Kp: "); Serial.println(Kp, 4);
   Serial.print("  Ki: "); Serial.println(Ki, 4);
@@ -124,7 +124,7 @@ void printAllPIDValues() {
     double Kd = heaters[i].pid->GetKd();
     
     Serial.print("Heater ");
-    Serial.print(i);
+    Serial.print(i + 1);
     Serial.print(": Kp=");
     Serial.print(Kp, 4);
     Serial.print(" Ki=");
@@ -137,13 +137,13 @@ void printAllPIDValues() {
 
 void setPIDValues(uint8_t heaterIndex, double Kp, double Ki, double Kd) {
   if (heaterIndex >= NUMBER_OF_HEATERS) {
-    Serial.println("Invalid heater index. Use 0-4.");
+    Serial.println("Invalid heater index. Use 1-5.");
     return;
   }
   heaters[heaterIndex].pid->SetTunings(Kp, Ki, Kd);
   savePIDToEEPROM(heaterIndex, Kp, Ki, Kd);
   Serial.print("Heater ");
-  Serial.print(heaterIndex);
+  Serial.print(heaterIndex + 1);
   Serial.println(" PID values updated and saved.");
   printPIDValues(heaterIndex);
 }
@@ -153,7 +153,7 @@ void printDetailedStatus() {
   Serial.println("HEATERS:");
   for (int i = 0; i < NUMBER_OF_HEATERS; i++) {
     Serial.print("  Heater ");
-    Serial.print(i);
+    Serial.print(i + 1);
     Serial.print(": ");
     Serial.print(heaters[i].input, 1);
     Serial.print("C / ");
@@ -217,7 +217,7 @@ void disableAllHeaters() {
 }
 
 void autoTunePID(uint8_t heaterIndex, double tuneSetpoint, int power, int cycles) {
-    Serial.print("Manual PID Autotune start: Heater "); Serial.print(heaterIndex);
+    Serial.print("Manual PID Autotune start: Heater "); Serial.print(heaterIndex + 1);
     Serial.print(" | Setpoint: "); Serial.print(tuneSetpoint);
     Serial.print("C | Power: "); Serial.print(power);
     Serial.print(" | Cycles: "); Serial.println(cycles);
@@ -241,7 +241,7 @@ void autoTunePID(uint8_t heaterIndex, double tuneSetpoint, int power, int cycles
         input = getTemperature(analogRead(heaters[heaterIndex].sensorPin));
 
         Serial.print("Tuning Heater ");
-        Serial.print(heaterIndex);
+        Serial.print(heaterIndex + 1);
         Serial.print(" | Temp: ");
         Serial.print(input, 1);
         Serial.print(" C | Output: ");
