@@ -13,7 +13,7 @@
 #define EXTRUDER_2_MOTOR_DRIVER_DIR     28
 #define EXTRUDER_2_MOTOR_DRIVER_ENABLE  24
 #define EXTRUDER_2_HEATER               9
-#define EXTRUDER_2_FILAMENT_SENSOR      19
+#define EXTRUDER_2_FILAMENT_SENSOR      2
 #define EXTRUDER_2_THERMISTOR           A14
 
 #define EXTRUDER_3_MOTOR_DRIVER_STEP    A0
@@ -34,7 +34,7 @@
 #define EXTRUDER_5_MOTOR_DRIVER_DIR     48 
 #define EXTRUDER_5_MOTOR_DRIVER_ENABLE  A8
 #define EXTRUDER_5_HEATER               44
-#define EXTRUDER_5_FILAMENT_SENSOR      2
+#define EXTRUDER_5_FILAMENT_SENSOR      18
 #define EXTRUDER_5_THERMISTOR           A5
 
 #define EXTRUDER_1_ENABLE_SWITCH        39
@@ -48,7 +48,6 @@
 #define HEATER_3_STABLE_LED                33
 #define HEATER_4_STABLE_LED                31
 #define HEATER_5_STABLE_LED                29
-
 
 //EXtruder operation enable switches
 
