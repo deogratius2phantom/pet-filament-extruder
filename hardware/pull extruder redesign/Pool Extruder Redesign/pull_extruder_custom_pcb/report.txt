@@ -1,0 +1,3 @@
+Error: Cannot find symbol for footprint 'AUX3'.
+Error: Cannot find symbol for footprint 'AUX4'.
+Error: Cannot find symbol for footprint 'AUX2'.

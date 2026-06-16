@@ -49,3 +49,12 @@ Thumbs.db
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# SolidWorks files
+*.SLDASM
+*.SLDPRT
+*.SLDDRW
+*.sldasm
+*.sldprt
+*.slddrw
+~$*

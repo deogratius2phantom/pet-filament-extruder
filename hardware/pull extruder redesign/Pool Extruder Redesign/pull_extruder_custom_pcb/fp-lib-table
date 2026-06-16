@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "RAMPS-1")(type "KiCad")(uri "C:/Users/deoke/Downloads/RAMPS-1.4_KiCad-master/RAMPS-1.pretty")(options "")(descr ""))
+)

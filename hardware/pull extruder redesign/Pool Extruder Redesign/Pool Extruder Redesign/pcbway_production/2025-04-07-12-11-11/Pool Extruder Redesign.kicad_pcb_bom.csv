@@ -1,0 +1,16 @@
+﻿Designator,Quantity,Value,Footprint,Package,MPN,DNP,Mount_Type,Description
+AUX2,1,Conn_02x05,PIN-HEADER-2x05,,,,tht,
+AUX3,1,Conn_02x04,PIN-HEADER-2x04,,,,tht,
+AUX4,1,Conn_01x18,PIN-HEADER-1x18,,,,tht,
+"C1, C2, C3, C4",4,C,C_0603_1608Metric,,,,smt,Unpolarized capacitor
+"D1, D2",2,LED,LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder,,,,smt,Light emitting diode
+"J1, J3, J4",3,Screw_Terminal_01x02,Altech_AK100_1x02_P5.00mm,,,,tht,"Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+"J2, J6",2,Conn_02x05_Top_Bottom,IDC-Header_2x05_P2.54mm_Vertical,,,,tht,"Generic connector, double row, 02x05, top/bottom pin numbering scheme (row 1: 1...pins_per_row, row2: pins_per_row+1 ... num_pins), script generated (kicad-library-utils/schlib/autogen/connector/)"
+J5,1,Conn_01x06_Socket,PinSocket_1x06_P2.54mm_Vertical,,,,tht,"Generic connector, single row, 01x06, script generated"
+J9,1,Conn_01x05_Pin,JST_XA_B05B-XASK-1_1x05_P2.50mm_Vertical,,,,tht,"Generic connector, single row, 01x05, script generated"
+"Q1, Q2",2,IRF540N,TO-220-3_Vertical,,,,tht,"33A Id, 100V Vds, HEXFET N-Channel MOSFET, TO-220"
+"R1, R2",2,10,R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,,,,smt,Resistor
+"R10, R5, R6, R9",4,4.7K,R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,,,,smt,Resistor
+"R3, R4",2,100K,R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,,,,smt,Resistor
+"R7, R8",2,10K,R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,,,,smt,Resistor
+"T1, T2, T3, T4",4,Conn_01x02_Socket,JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,,,,tht,"Generic connector, single row, 01x02, script generated"
