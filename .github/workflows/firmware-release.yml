@@ -1,0 +1,70 @@
+name: Firmware Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set firmware version from tag
+        run: echo "FIRMWARE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run
+
+      - name: Locate built hex file
+        id: hex
+        run: |
+          HEX=$(find firmware/.pio/build -name "firmware.hex" | head -1)
+          echo "path=$HEX" >> $GITHUB_OUTPUT
+          echo "name=pet-filament-extruder-${{ github.ref_name }}.hex" >> $GITHUB_OUTPUT
+
+      - name: Rename hex for release
+        run: cp "${{ steps.hex.outputs.path }}" "${{ steps.hex.outputs.name }}"
+
+      - name: Generate SHA256 checksum
+        run: |
+          sha256sum "${{ steps.hex.outputs.name }}" > checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Firmware ${{ github.ref_name }}"
+          body: |
+            ## PET Filament Extruder Firmware ${{ github.ref_name }}
+
+            ### Installation
+            Flash `${{ steps.hex.outputs.name }}` to your Arduino Mega 2560 using avrdude or the Arduino IDE.
+
+            ### Verifying integrity
+            ```
+            sha256sum -c checksums.txt
+            ```
+
+            ### Querying version on device
+            Connect via serial (115200 baud) and send:
+            ```
+            VERSION
+            ```
+          files: |
+            ${{ steps.hex.outputs.name }}
+            checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,60 @@
+name: Firmware Nightly Build
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # Midnight UTC every day
+  workflow_dispatch:        # Allow manual trigger from GitHub UI
+
+jobs:
+  nightly-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set nightly firmware version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y%m%d)
+          echo "FIRMWARE_VERSION=nightly-${DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=pet-filament-extruder-nightly-${DATE}-${SHORT_SHA}.hex" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run
+
+      - name: Locate and rename hex file
+        run: |
+          HEX=$(find firmware/.pio/build -name "firmware.hex" | head -1)
+          cp "$HEX" "${{ env.ARTIFACT_NAME }}"
+
+      - name: Generate SHA256 checksum
+        run: sha256sum "${{ env.ARTIFACT_NAME }}" > checksums.txt
+
+      - name: Upload hex artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.ARTIFACT_NAME }}
+            checksums.txt
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "### Nightly Build Complete 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ env.FIRMWARE_VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifact:** \`${{ env.ARTIFACT_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Checksum:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat checksums.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

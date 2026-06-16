@@ -3,6 +3,7 @@
 #include "stepper.h"
 #include "encoder.h"
 #include "config.h"
+#include <version.h>
 
 bool statusUpdatesPaused = false;
 uint32_t lastSerialInput = 0;
@@ -54,6 +55,9 @@ void printMenu() {
   Serial.println("SYSTEM COMMANDS:");
   Serial.println("  HELP or MENU");
   Serial.println("    - Display this menu");
+  Serial.println();
+  Serial.println("  VERSION");
+  Serial.println("    - Show firmware version");
   Serial.println();
   Serial.println("  RESET");
   Serial.println("    - Reset all motor speeds to default");
@@ -155,6 +159,10 @@ void handleSerialCommands() {
       
     } else if (cmd.startsWith("RESET")) {
       resetMotorSpeeds();
+
+    } else if (cmd.startsWith("VERSION")) {
+      Serial.print("Firmware version: ");
+      Serial.println(FIRMWARE_VERSION);
       
     } else if (cmd.startsWith("ENABLE")) {
       if (cmd.indexOf("ALL") != -1) {

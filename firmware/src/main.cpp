@@ -5,6 +5,7 @@
 #include "commands.h"
 #include <pins.h>
 #include <thermistor.h>
+#include <version.h>
 
 // Timer4 ISR - Heater control with software PWM
 ISR(TIMER4_COMPA_vect) {
@@ -180,6 +181,8 @@ void setup() {
   sei(); // Enable interrupts
   
   Serial.println("PET Filament Extruder Controller Initialized");
+  Serial.print("Firmware version: ");
+  Serial.println(FIRMWARE_VERSION);
   Serial.println("Software PWM enabled for all heaters (10Hz)");
   Serial.print("Default speed: ");
   Serial.print(DEFAULT_SPEED);
